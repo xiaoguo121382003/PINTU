@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词海星图・WordGalaxy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E40AF',
+                        secondary: '#3B82F6',
+                        accent: '#93C5FD',
+                        light: '#DBEAFE',
+                        dark: '#0C4A6E'
+                    },
+                    fontFamily: {
+                        fantasy: ['Comic Sans MS', 'cursive', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            }
+
+            .text-shadow-lg {
+                text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            }
+
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+
+            .card-hover:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+
+            .bg-pattern {
+                background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%2393C5FD' fill-opacity='0.2' fill-rule='evenodd'/%3E%3C/svg%3E");
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-primary to-dark bg-pattern">
+    <!-- 导航栏 -->
+    <nav class="bg-primary/80 backdrop-blur-md text-white shadow-lg fixed w-full z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-puzzle-piece text-2xl text-accent"></i>
+                <span class="font-fantasy text-xl">词海星图・WordGalaxy</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="hover:text-accent transition-colors duration-200">首页</a>
+                <a href="#" id="game-instructions" class="hover:text-accent transition-colors duration-200">游戏说明</a>
+                <a href="#" id="leaderboard" class="hover:text-accent transition-colors duration-200">排行榜</a>
+                <a href="#" id="settings" class="hover:text-accent transition-colors duration-200">设置</a>
+            </div>
+            <button class="md:hidden text-white text-xl">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 pt-24 pb-16">
+        <!-- 游戏标题区域 -->
+        <section class="text-center mb-12">
+            <div class="flex flex-col items-center">
+                <div class="relative mb-4">
+                    <div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-accent flex items-center justify-center shadow-lg animate-pulse">
+                        <i class="fa fa-star text-primary text-4xl md:text-5xl"></i>
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 w-12 h-12 md:w-16 md:h-16 bg-secondary rounded-full flex items-center justify-center shadow-lg">
+                        <i class="fa fa-puzzle-piece text-light text-2xl md:text-3xl"></i>
+                    </div>
+                </div>
+                <h1 class="text-[clamp(2.5rem,6vw,4rem)] font-fantasy font-bold text-blue-600 text-shadow-lg mb-2 tracking-wide">
+                    词海星图・WordGalaxy
+                </h1>
+                <p class="text-[clamp(1rem,2vw,1.25rem)] text-light max-w-2xl mx-auto">
+                    探索单词世界，在拼图游戏中学习英语
+                </p>
+            </div>
+        </section>
+
+        <!-- 关卡选择区域 -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- 关卡1：缤纷果园 -->
+            <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 overflow-hidden">
+                    <img src="img/shuiguo.png" alt="缤纷果园关卡图片"
+                        class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-primary mb-2">缤纷果园</h3>
+                    <p class="text-gray-600 text-sm mb-4">学习水果相关的英语单词</p>
+                    <button class="play-btn w-full bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                        data-level="fruit">
+                        <a href="pintu1.html">开始游戏</a>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关卡2：万兽之国 -->
+            <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 overflow-hidden">
+                    <img src="img/dongwu.png" alt="万兽之国关卡图片"
+                        class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-primary mb-2">万兽之国</h3>
+                    <p class="text-gray-600 text-sm mb-4">认识各种可爱的动物朋友</p>
+                    <button class="play-btn w-full bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                        data-level="animal">
+                        <a href="pintu2.html">开始游戏</a>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关卡3：绿蔬城邦 -->
+            <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 overflow-hidden">
+                    <img src="img/shucai.png" alt="绿蔬城邦关卡图片"
+                        class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-primary mb-2">绿蔬城邦</h3>
+                    <p class="text-gray-600 text-sm mb-4">了解健康蔬菜的英语表达</p>
+                    <button class="play-btn w-full bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                        data-level="vegetable">
+                        <a href="pintu3.html">开始游戏</a>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关卡4：美食驿站 -->
+            <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 overflow-hidden">
+                    <img src="img/meishi.png" alt="美食驿站关卡图片"
+                        class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-primary mb-2">美食驿站</h3>
+                    <p class="text-gray-600 text-sm mb-4">探索世界各地的美食名称</p>
+                    <button class="play-btn w-full bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                        data-level="food">
+                        <a href="pintu4.html">开始游戏</a>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关卡5：自然秘境 -->
+            <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 overflow-hidden">
+                    <img src="img/ziran.png" alt="自然秘境关卡图片"
+                        class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-primary mb-2">自然秘境</h3>
+                    <p class="text-gray-600 text-sm mb-4">探索大自然的奇妙英语词汇</p>
+                    <button class="play-btn w-full bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                        data-level="nature">
+                        <a href="pintu5.html">开始游戏</a>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关卡6：家具阁间 -->
+            <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 overflow-hidden">
+                    <img src="img/jiajv.png" alt="家具阁间关卡图片"
+                        class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-primary mb-2">家具阁间</h3>
+                    <p class="text-gray-600 text-sm mb-4">学习房间家具的英语单词</p>
+                    <button class="play-btn w-full bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                        data-level="furniture">
+                        <a href="pintu6.html">开始游戏</a>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关卡7：万象空间 -->
+            <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 overflow-hidden">
+                    <img src="img/changsuo.png" alt="万象空间关卡图片"
+                        class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-primary mb-2">万象空间</h3>
+                    <p class="text-gray-600 text-sm mb-4">探索宇宙和世界的奇妙词汇</p>
+                    <button class="play-btn w-full bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                        data-level="universe">
+                        <a href="pintu7.html">开始游戏</a>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关卡8：职业图鉴 -->
+            <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 overflow-hidden">
+                    <img src="img/zhiye.png" alt="职业图鉴关卡图片"
+                        class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-primary mb-2">职业图鉴</h3>
+                    <p class="text-gray-600 text-sm mb-4">了解各种不同职业的英语表达</p>
+                    <button class="play-btn w-full bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+                        data-level="career">
+                        <a href="pintu8.html">开始游戏</a>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-primary/80 backdrop-blur-md text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-2">© 2025 词海星图・WordGalaxy - 趣味英语拼图游戏</p>
+            <div class="flex justify-center space-x-4 mt-4">
+                <a href="#" class="text-light hover:text-accent transition-colors duration-200">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a href="#" class="text-light hover:text-accent transition-colors duration-200">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a href="#" class="text-light hover:text-accent transition-colors duration-200">
+                    <i class="fa fa-instagram"></i>
+                </a>
+                <a href="#" class="text-light hover:text-accent transition-colors duration-200">
+                    <i class="fa fa-youtube"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 难度选择模态框 -->
+    <div id="difficulty-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-transform duration-300 scale-95"
+            id="modal-content">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
+                    <i class="fa fa-cubes text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-primary mb-2" id="level-title">选择难度</h2>
+                <p class="text-gray-600" id="level-description">请选择游戏难度</p>
+            </div>
+            <div class="space-y-4">
+                <button id="easy-mode" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300">
+                    <i class="fa fa-smile-o mr-2"></i>简单模式
+                </button>
+                <button id="hard-mode" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300">
+                    <i class="fa fa-frown-o mr-2"></i>复杂模式
+                </button>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="close-modal"
+                    class="text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                    <i class="fa fa-times mr-1"></i> 取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏说明模态框 -->
+    <div id="instructions-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-transform duration-300 scale-95"
+            id="instructions-modal-content">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
+                    <i class="fa fa-info-circle text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-primary mb-2">游戏说明</h2>
+                <p class="text-gray-600">欢迎来到词海星图・WordGalaxy！这是一个超级有趣的英语拼图游戏哦😜。你可以通过完成不同的关卡，学习各种主题的英语单词。选择不同的难度模式，挑战自己的英语水平吧！快来一起探索单词的奇妙世界吧🥳！</p>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="close-instructions-modal"
+                    class="text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                    <i class="fa fa-times mr-1"></i> 关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 排行榜模态框 -->
+    <div id="leaderboard-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-transform duration-300 scale-95"
+            id="leaderboard-modal-content">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
+                    <i class="fa fa-trophy text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-primary mb-2">实时排行榜</h2>
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th class="text-left">排名</th>
+                            <th class="text-left">玩家</th>
+                            <th class="text-left">分数</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-table">
+                        <!-- 这里会动态添加排行榜数据 -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="close-leaderboard-modal"
+                    class="text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                    <i class="fa fa-times mr-1"></i> 关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-transform duration-300 scale-95"
+            id="settings-modal-content">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
+                    <i class="fa fa-cog text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-primary mb-2">设置</h2>
+                <div class="space-y-4">
+                    <div>
+                        <button id="play-music" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                            <i class="fa fa-play mr-1"></i> 播放音乐
+                        </button>
+                    </div>
+                    <div>
+                        <button id="pause-music" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                            <i class="fa fa-pause mr-1"></i> 暂停音乐
+                        </button>
+                    </div>
+                    <div>
+                        <button id="stop-music" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                            <i class="fa fa-stop mr-1"></i> 关闭音乐
+                        </button>
+                    </div>
+                    <div>
+                        <label for="volume-control" class="block mt-4 text-gray-700">声音大小:</label>
+                        <input type="range" id="volume-control" min="0" max="1" step="0.1" value="1"
+                            class="w-full mt-2 accent-primary">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="close-settings-modal"
+                    class="text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                    <i class="fa fa-times mr-1"></i> 关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音乐元素 -->
+    <audio id="game-music" src="your-music-file.mp3" loop></audio>
+
+    <script>
+        // 存储当前选择的关卡
+        let currentLevel = '';
+
+        // 关卡数据
+        const levelData = {
+            'fruit': { title: '缤纷果园', description: '学习水果相关的英语单词' },
+            'animal': { title: '万兽之国', description: '认识各种可爱的动物朋友' },
+            'vegetable': { title: '绿蔬城邦', description: '了解健康蔬菜的英语表达' },
+            'food': { title: '美食驿站', description: '探索世界各地的美食名称' },
+            'nature': { title: '自然秘境', description: '探索大自然的奇妙英语词汇' },
+            'furniture': { title: '家具阁间', description: '学习房间家具的英语单词' },
+            'universe': { title: '万象空间', description: '探索宇宙和世界的奇妙词汇' },
+            'career': { title: '职业图鉴', description: '了解各种不同职业的英语表达' }
+        };
+
+        // 获取DOM元素
+        const modal = document.getElementById('difficulty-modal');
+        const modalContent = document.getElementById('modal-content');
+        const levelTitle = document.getElementById('level-title');
+        const levelDescription = document.getElementById('level-description');
+        const easyModeBtn = document.getElementById('easy-mode');
+        const hardModeBtn = document.getElementById('hard-mode');
+        const closeModalBtn = document.getElementById('close-modal');
+        const playBtns = document.querySelectorAll('.play-btn');
+        const instructionsModal = document.getElementById('instructions-modal');
+        const instructionsModalContent = document.getElementById('instructions-modal-content');
+        const closeInstructionsModalBtn = document.getElementById('close-instructions-modal');
+        const gameInstructionsBtn = document.getElementById('game-instructions');
+        const leaderboardModal = document.getElementById('leaderboard-modal');
+        const leaderboardModalContent = document.getElementById('leaderboard-modal-content');
+        const closeLeaderboardModalBtn = document.getElementById('close-leaderboard-modal');
+        const leaderboardBtn = document.getElementById('leaderboard');
+        const leaderboardTable = document.getElementById('leaderboard-table');
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsModalContent = document.getElementById('settings-modal-content');
+        const closeSettingsModalBtn = document.getElementById('close-settings-modal');
+        const settingsBtn = document.getElementById('settings');
+        const playMusicBtn = document.getElementById('play-music');
+        const pauseMusicBtn = document.getElementById('pause-music');
+        const stopMusicBtn = document.getElementById('stop-music');
+        const volumeControl = document.getElementById('volume-control');
+        const gameMusic = document.getElementById('game-music');
+
+        // 打开模态框
+        function openModal(level) {
+            currentLevel = level;
+            levelTitle.textContent = `${levelData[level].title} - 选择难度`;
+            levelDescription.textContent = levelData[level].description;
+
+            // 修改按钮文本
+            easyModeBtn.innerHTML = `<i class="fa fa-smile-o mr-2"></i>${levelData[level].title}-简单`;
+            hardModeBtn.innerHTML = `<i class="fa fa-frown-o mr-2"></i>${levelData[level].title}-复杂`;
+
+            // 显示模态框并添加动画
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+
+            // 禁止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            // 移除动画效果
+            modal.classList.remove('opacity-100');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+
+            // 延迟隐藏模态框，让动画完成
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                // 恢复背景滚动
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // 打开游戏说明模态框
+        function openInstructionsModal() {
+            instructionsModal.classList.remove('hidden');
+            setTimeout(() => {
+                instructionsModal.classList.add('opacity-100');
+                instructionsModalContent.classList.remove('scale-95');
+                instructionsModalContent.classList.add('scale-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭游戏说明模态框
+        function closeInstructionsModal() {
+            instructionsModal.classList.remove('opacity-100');
+            instructionsModalContent.classList.remove('scale-100');
+            instructionsModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                instructionsModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // 打开排行榜模态框
+        function openLeaderboardModal() {
+            // 模拟实时排行榜数据
+            const leaderboardData = [
+                { rank: 1, player: '玩家1', score: 100 },
+                { rank: 2, player: '玩家2', score: 90 },
+                { rank: 3, player: '玩家3', score: 80 },
+                { rank: 4, player: '玩家4', score: 75 },
+                { rank: 5, player: '玩家5', score: 70 }
+            ];
+
+            leaderboardTable.innerHTML = '';
+            leaderboardData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2">${item.rank}</td>
+                    <td class="py-2">${item.player}</td>
+                    <td class="py-2">${item.score}</td>
+                `;
+                leaderboardTable.appendChild(row);
+            });
+
+            leaderboardModal.classList.remove('hidden');
+            setTimeout(() => {
+                leaderboardModal.classList.add('opacity-100');
+                leaderboardModalContent.classList.remove('scale-95');
+                leaderboardModalContent.classList.add('scale-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭排行榜模态框
+        function closeLeaderboardModal() {
+            leaderboardModal.classList.remove('opacity-100');
+            leaderboardModalContent.classList.remove('scale-100');
+            leaderboardModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                leaderboardModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // 打开设置模态框
+        function openSettingsModal() {
+            settingsModal.classList.remove('hidden');
+            setTimeout(() => {
+                settingsModal.classList.add('opacity-100');
+                settingsModalContent.classList.remove('scale-95');
+                settingsModalContent.classList.add('scale-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭设置模态框
+        function closeSettingsModal() {
+            settingsModal.classList.remove('opacity-100');
+            settingsModalContent.classList.remove('scale-100');
+            settingsModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                settingsModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // 点击开始游戏按钮事件
+        playBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault(); // 阻止默认行为，防止链接跳转
+                const level = btn.dataset.level;
+                openModal(level);
+            });
+        });
+
+        // 关闭模态框按钮事件
+        closeModalBtn.addEventListener('click', closeModal);
+
+        // 点击模态框外部关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // 导航栏滚动效果
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('py-2', 'shadow-xl');
+                nav.classList.remove('py-3', 'shadow-lg');
+            } else {
+                nav.classList.add('py-3', 'shadow-lg');
+                nav.classList.remove('py-2', 'shadow-xl');
+            }
+        });
+
+        // 游戏说明按钮事件
+        gameInstructionsBtn.addEventListener('click', openInstructionsModal);
+        closeInstructionsModalBtn.addEventListener('click', closeInstructionsModal);
+        instructionsModal.addEventListener('click', (e) => {
+            if (e.target === instructionsModal) {
+                closeInstructionsModal();
+            }
+        });
+
+        // 排行榜按钮事件
+        leaderboardBtn.addEventListener('click', openLeaderboardModal);
+        closeLeaderboardModalBtn.addEventListener('click', closeLeaderboardModal);
+        leaderboardModal.addEventListener('click', (e) => {
+            if (e.target === leaderboardModal) {
+                closeLeaderboardModal();
+            }
+        });
+
+        // 设置按钮事件
+        settingsBtn.addEventListener('click', openSettingsModal);
+        closeSettingsModalBtn.addEventListener('click', closeSettingsModal);
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                closeSettingsModal();
+            }
+        });
+
+        // 音乐播放按钮事件
+        playMusicBtn.addEventListener('click', () => {
+            gameMusic.play().catch(error => {
+                console.error("播放音乐失败:", error);
+                alert("由于浏览器限制，需要用户交互后才能播放音乐。请再次点击播放按钮。");
+            });
+        });
+
+        // 音乐暂停按钮事件
+        pauseMusicBtn.addEventListener('click', () => {
+            gameMusic.pause();
+        });
+
+        // 音乐关闭按钮事件
+        stopMusicBtn.addEventListener('click', () => {
+            gameMusic.pause();
+            gameMusic.currentTime = 0;
+        });
+
+        // 音量控制事件
+        volumeControl.addEventListener('input', () => {
+            gameMusic.volume = volumeControl.value;
+        });
+
+        // 难度选择按钮事件
+      // 定义关卡名称到编号的映射关系
+      const levelMap = {
+          'fruit': 1,
+          'animal': 2,
+          'vegetable': 3,
+          'food': 4,
+          'nature': 5,
+          'furniture': 6,
+          'universe': 7,
+          'career': 8
+      };
+      
+      // 难度选择按钮事件
+      easyModeBtn.addEventListener('click', () => {
+          console.log(`选择了${levelData[currentLevel].title}的简单模式`);
+          closeModal();
+          
+          // 根据当前关卡生成对应的简单模式页面URL
+          const levelNumber = levelMap[currentLevel] || 1;
+          window.location.href = `pintu${levelNumber}.html?level=${currentLevel}&difficulty=easy`;
+      });
+      
+      hardModeBtn.addEventListener('click', () => {
+          console.log(`选择了${levelData[currentLevel].title}的复杂模式`);
+          closeModal();
+          
+          // 根据当前关卡生成对应的困难模式页面URL
+          const levelNumber = levelMap[currentLevel] || 1;
+          window.location.href = `pintu${levelNumber}-${levelNumber}.html?level=${currentLevel}&difficulty=hard`;
+      });
+
+    </script>
+</body>
+
+</html>    

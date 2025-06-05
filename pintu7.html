@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语拼图 - 在玩中学，让英语学习更快乐</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#EC4899',
+                        accent: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        light: '#F3F4F6',
+                        dark: '#1F2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 3s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'pulse-light': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .grid-puzzle {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr); /* 修改为 2x2 网格 */
+                grid-template-rows: repeat(2, 1fr);
+                gap: 6px;
+            }
+            .piece-drag {
+                cursor: grab;
+                transition: all 0.2s ease;
+            }
+            .piece-drag:active {
+                cursor: grabbing;
+            }
+            .piece-placeholder {
+                background-color: rgba(243, 244, 246, 0.5);
+                border: 1px dashed #9CA3AF;
+                transition: all 0.2s ease;
+            }
+            .btn-hover {
+                transition: all 0.3s ease;
+            }
+            .btn-hover:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            .progress-bar {
+                transition: width 0.5s ease;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                transform: translateY(-4px);
+            }
+            .game-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 1rem;
+            }
+            .piece-container {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .puzzle-area {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .word-image-container {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .flex-grow-1 {
+                flex-grow: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-7xl w-full">
+        <!-- 顶部标题区域 -->
+        <header class="text-center mb-8 animate-fade-in">
+            <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-primary mb-2 tracking-tight">
+                英语拼图
+            </h1>
+            <p class="text-[clamp(1rem,2vw,1.25rem)] text-gray-600 max-w-2xl mx-auto">
+                在玩中学，让英语学习更快乐
+            </p>
+        </header>
+
+        <!-- 游戏主体区域 -->
+        <main class="bg-white rounded-2xl shadow-xl overflow-hidden animate-slide-up">
+            <!-- 提示区 -->
+            <div class="bg-gradient-to-r from-primary to-blue-600 p-4 text-white">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-signs-post text-yellow-300 text-xl"></i>
+                        <div>
+                            <p class="text-xs text-gray-200">当前关卡</p>
+                            <p class="text-lg font-bold" id="level-display">第 1 关 - 第 1 题</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-star text-yellow-300 text-xl"></i>
+                        <div>
+                            <p class="text-xs text-gray-200">得分</p>
+                            <p class="text-lg font-bold" id="score-display">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-lightbulb text-yellow-300 text-xl"></i>
+                        <div class="w-full">
+                            <p class="text-xs text-gray-200">提示</p>
+                            <div class="w-full bg-gray-700 rounded-full h-2.5 mt-1">
+                                <div class="progress-bar bg-yellow-400 h-2.5 rounded-full" id="hint-progress" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs mt-1" id="hint-text">3/3 次提示机会</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-clock text-yellow-300 text-xl"></i>
+                        <div>
+                            <p class="text-xs text-gray-200">用时</p>
+                            <p class="text-lg font-bold" id="timer-display">00:00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 游戏区域 -->
+            <div class="p-6">
+                <div class="game-container">
+                    <!-- 左侧区域：单词和完整图片 -->
+                    <div class="word-image-container space-y-6">
+                        <!-- 单词显示区 -->
+                        <div class="bg-blue-50 rounded-xl p-5 card-shadow">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-xl font-bold text-gray-800">单词</h2>
+                                <div class="flex space-x-2">
+                                    <button id="speak-btn" class="bg-blue-100 hover:bg-blue-200 text-blue-600 p-2 rounded-full transition-all">
+                                        <i class="fa fa-volume-up"></i>
+                                    </button>
+                                    <button id="meaning-btn" class="bg-purple-100 hover:bg-purple-200 text-purple-600 p-2 rounded-full transition-all">
+                                        <i class="fa fa-book"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <h3 class="text-3xl font-bold text-primary" id="word-display">Apple</h3>
+                                <p class="text-lg text-gray-600 opacity-0 transition-opacity duration-300 mt-2" id="meaning-display">苹果</p>
+                            </div>
+                        </div>
+
+                        <!-- 完整图片显示区 -->
+                        <div class="bg-white rounded-xl p-5 card-shadow relative overflow-hidden flex-grow-1">
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">完整图片</h2>
+                            <div class="aspect-square w-full bg-gray-100 rounded-lg overflow-hidden flex-grow-1">
+                                <div id="image-container" class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                    <p class="text-gray-500">使用3次提示后显示完整图片</p>
+                                </div>
+                                <img id="full-image" class="w-full h-full object-cover opacity-0 transition-opacity duration-500" src="" alt="完整图片">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 中间区域：拼图区域 -->
+                    <div class="puzzle-area space-y-6">
+                        <!-- 拼图区域 -->
+                        <div class="bg-orange-50 rounded-xl p-5 card-shadow flex-grow-1">
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">拼图区域</h2>
+                            <div id="puzzle-container" class="grid-puzzle aspect-square w-full bg-gray-100 rounded-lg p-2">
+                                <!-- 拼图格子将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧区域：拼图碎片 -->
+                    <div class="piece-container space-y-6">
+                        <!-- 拼图碎片区域 -->
+                        <div class="bg-green-50 rounded-xl p-5 card-shadow flex-grow-1">
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">拼图碎片</h2>
+                            <div id="pieces-container" class="grid grid-cols-2 gap-3"> <!-- 修改为 2x2 网格 -->
+                                <!-- 拼图碎片将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 按钮区域 -->
+            <div class="bg-gray-50 p-6 border-t border-gray-200">
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button id="hint-btn" class="btn-hover bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 shadow-lg">
+                        <i class="fa fa-lightbulb"></i>
+                        <span>提示</span>
+                    </button>
+                    <button id="complete-btn" class="btn-hover bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 shadow-lg">
+                        <i class="fa fa-check"></i>
+                        <span>完成</span>
+                    </button>
+                    <button id="reset-btn" class="btn-hover bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 shadow-lg">
+                        <i class="fa fa-refresh"></i>
+                        <span>重试</span>
+                    </button>
+                    <button id="exit-btn" class="btn-hover bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 shadow-lg">
+                        <i class="fa fa-sign-out"></i>
+                        <span>退出</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 结果弹窗 -->
+        <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300">
+                <div class="p-6 text-center">
+                    <div id="result-icon" class="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 bg-green-100">
+                        <i class="fa fa-trophy text-4xl text-green-500"></i>
+                    </div>
+                    <h2 id="result-title" class="text-2xl font-bold text-gray-800 mb-2">恭喜过关！</h2>
+                    <p id="result-message" class="text-gray-600 mb-4">你获得了 5 分</p>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">当前关卡得分：</span>
+                            <span id="current-score" class="font-bold text-lg">5</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">总得分：</span>
+                            <span id="total-score" class="font-bold text-lg">5</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">用时：</span>
+                            <span id="total-time" class="font-bold text-lg">00:45</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="next-btn" class="btn-hover bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full flex-1 shadow-lg">
+                            下一关
+                        </button>
+                        <button id="retry-btn" class="btn-hover bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full flex-1 shadow-lg">
+                            重试
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏数据
+        const gameData = {
+            currentLevel: 1, // 当前大关卡
+            currentPuzzle: 1, // 当前小关卡中的拼图序号
+            score: 0, // 总得分
+            hintUsed: 0, // 已使用的提示次数
+            timer: 0, // 计时器
+            timerInterval: null, // 计时器间隔
+            isPlaying: false, // 是否正在游戏
+            puzzles: [], // 拼图数据，将在初始化时随机生成
+            originalPuzzles: [
+                { word: "School", meaning: "学校",image: "img/school.png"},
+                { word: "Library", meaning: "图书馆", image: "img/library.png" },
+                { word: "Hospital", meaning: "医院", image: "img/hospital.png" },
+                { word: "Police station", meaning: "警察局", image: "img/police station.png" },
+                { word: "Fire station", meaning: "消防所", image: "img/fire station.png" },
+                { word: "Airport", meaning: "机场", image: "img/airport.png" },
+                { word: "Zoo", meaning: "动物园", image: "img/zoo.png" },
+                { word: "Playground", meaning: "操场", image: "img/playground.png" },
+                { word: "Farm", meaning: "农场", image: "img/farm.png" },
+                { word: "Bank", meaning: "银行", image: "img/bank.png" },
+                { word: "Supermarket", meaning: "超市", image: "img/supermarket.png" },
+                { word: "Factory", meaning: "工厂", image: "img/factory.png" },
+                { word: "Restaurant", meaning: "餐厅", image: "img/restaurant.png" },
+                { word: "Cinema", meaning: "电影院", image: "img/cinema.png" },
+                { word: "Bookstore", meaning: "书店", image: "img/bookstore.png" },
+                { word: "Theatre", meaning: "剧院", image: "img/theatre.png" },
+                { word: "Museum", meaning: "博物馆", image: "img/museum.png" },
+                { word: "Office", meaning: "办公室", image: "img/office.png" }
+                
+            ],
+            currentPuzzleData: null, // 当前拼图数据
+            puzzlePieces: [], // 拼图碎片
+            puzzleGrid: [], // 拼图格子
+            draggedPiece: null // 当前被拖动的拼图碎片
+        };
+		// 更新分数
+		        function updateScore(currentScore) {
+		            // 获取当前总积分
+		            let userScore = parseInt(localStorage.getItem('userScore')) || 0;
+		            // 更新总积分
+		            userScore += currentScore;
+		            // 存储更新后的总积分到localStorage
+		            localStorage.setItem('userScore', userScore);
+		            // 更新页面上的总得分显示
+		            const totalScoreDisplay = document.getElementById('total-score');
+		            if (totalScoreDisplay) {
+		                totalScoreDisplay.textContent = userScore;
+		            }
+		        }
+
+
+        // DOM 元素
+        const elements = {
+            levelDisplay: document.getElementById('level-display'),
+            scoreDisplay: document.getElementById('score-display'),
+            hintProgress: document.getElementById('hint-progress'),
+            hintText: document.getElementById('hint-text'),
+            timerDisplay: document.getElementById('timer-display'),
+            wordDisplay: document.getElementById('word-display'),
+            meaningDisplay: document.getElementById('meaning-display'),
+            fullImage: document.getElementById('full-image'),
+            imageContainer: document.getElementById('image-container'),
+            piecesContainer: document.getElementById('pieces-container'),
+            puzzleContainer: document.getElementById('puzzle-container'),
+            speakBtn: document.getElementById('speak-btn'),
+            meaningBtn: document.getElementById('meaning-btn'),
+            hintBtn: document.getElementById('hint-btn'),
+            completeBtn: document.getElementById('complete-btn'),
+            resetBtn: document.getElementById('reset-btn'),
+            exitBtn: document.getElementById('exit-btn'),
+            resultModal: document.getElementById('result-modal'),
+            resultIcon: document.getElementById('result-icon'),
+            resultTitle: document.getElementById('result-title'),
+            resultMessage: document.getElementById('result-message'),
+            currentScore: document.getElementById('current-score'),
+            totalScore: document.getElementById('total-score'),
+            totalTime: document.getElementById('total-time'),
+            nextBtn: document.getElementById('next-btn'),
+            retryBtn: document.getElementById('retry-btn')
+        };
+
+        // 初始化游戏
+        function initGame() {
+            // 随机选择10个单词和图片
+            selectRandomPuzzles();
+            
+            // 加载第一关
+            loadLevel(gameData.currentLevel, gameData.currentPuzzle);
+            // 开始计时
+            startTimer();
+            // 绑定事件监听器
+            bindEventListeners();
+        }
+
+        // 从原始数据中随机选择10个拼图
+        function selectRandomPuzzles() {
+            // 创建原始数据的副本
+            const shuffled = [...gameData.originalPuzzles];
+            
+            // 随机打乱数组
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            
+            // 选择前10个
+            gameData.puzzles = shuffled.slice(0, 10);
+            
+            // 再次随机打乱关卡顺序
+            for (let i = gameData.puzzles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [gameData.puzzles[i], gameData.puzzles[j]] = [gameData.puzzles[j], gameData.puzzles[i]];
+            }
+        }
+
+        // 加载关卡
+        function loadLevel(level, puzzleIndex) {
+            // 更新游戏数据
+            gameData.currentLevel = level;
+            gameData.currentPuzzle = puzzleIndex;
+            gameData.hintUsed = 0; // 重置提示使用次数
+            gameData.isPlaying = true;
+            
+            // 选择当前拼图数据
+            const puzzleIndexInArray = (level - 1) * 5 + (puzzleIndex - 1);
+            gameData.currentPuzzleData = gameData.puzzles[puzzleIndexInArray];
+            
+            // 更新UI
+            updateUIDisplay();
+            
+            // 初始化拼图
+            initPuzzle();
+        }
+
+        // 更新UI显示
+        function updateUIDisplay() {
+            // 更新关卡显示
+            elements.levelDisplay.textContent = `第 ${gameData.currentLevel} 关 - 第 ${gameData.currentPuzzle} 题`;
+            
+            // 更新得分显示
+            elements.scoreDisplay.textContent = gameData.score;
+            
+            // 更新提示进度
+            elements.hintProgress.style.width = `${(gameData.hintUsed / 3) * 100}%`;
+            elements.hintText.textContent = `${3 - gameData.hintUsed}/3 次提示机会`;
+            
+            // 更新单词和含义
+            elements.wordDisplay.textContent = gameData.currentPuzzleData.word;
+            elements.meaningDisplay.textContent = gameData.currentPuzzleData.meaning;
+            elements.meaningDisplay.classList.add('opacity-0');
+            
+            // 更新完整图片
+            elements.fullImage.src = gameData.currentPuzzleData.image;
+            elements.fullImage.classList.add('opacity-0');
+            elements.imageContainer.innerHTML = '<p class="text-gray-500">使用3次提示后显示完整图片</p>'; // 重置图片容器内容
+        }
+
+        // 初始化拼图
+        function initPuzzle() {
+            // 清空拼图区域和碎片区域
+            elements.piecesContainer.innerHTML = '';
+            elements.puzzleContainer.innerHTML = '';
+            
+            // 创建拼图格子
+            gameData.puzzleGrid = [];
+            for (let i = 0; i < 4; i++) { // 修改为 4 个格子
+                const gridCell = document.createElement('div');
+                gridCell.classList.add('piece-placeholder');
+                gridCell.dataset.index = i;
+                
+                // 添加拖放事件
+                gridCell.addEventListener('dragover', handleDragOver);
+                gridCell.addEventListener('drop', handleDrop);
+                
+                elements.puzzleContainer.appendChild(gridCell);
+                gameData.puzzleGrid.push(null); // 初始化为空
+            }
+            
+            // 创建拼图碎片
+            gameData.puzzlePieces = [];
+            // 计算碎片大小（基于拼图区域宽度）
+            const puzzleContainerWidth = elements.puzzleContainer.getBoundingClientRect().width;
+            const pieceSize = (puzzleContainerWidth - 6) / 2; // 修改为 2 列，减去间隙
+            
+            for (let i = 0; i < 4; i++) { // 修改为 4 个碎片
+                const piece = document.createElement('div');
+                piece.classList.add('piece-drag', 'rounded-md', 'overflow-hidden', 'shadow-md');
+                piece.dataset.index = i; // 正确位置索引
+                piece.dataset.position = i; // 当前位置索引
+                
+                // 设置碎片的背景图片和位置
+                const row = Math.floor(i / 2);
+                const col = i % 2;
+                piece.style.width = `${pieceSize}px`;
+                piece.style.height = `${pieceSize}px`;
+                piece.style.backgroundImage = `url(${gameData.currentPuzzleData.image})`;
+                piece.style.backgroundSize = `${pieceSize * 2}px ${pieceSize * 2}px`;
+                piece.style.backgroundPosition = `-${col * pieceSize}px -${row * pieceSize}px`;
+                
+                // 添加拖拽事件
+                piece.setAttribute('draggable', 'true');
+                piece.addEventListener('dragstart', handleDragStart);
+                piece.addEventListener('dragend', handleDragEnd);
+                
+                elements.piecesContainer.appendChild(piece);
+                gameData.puzzlePieces.push(piece);
+            }
+            
+            // 随机打乱碎片位置
+            shufflePieces();
+        }
+
+        // 随机打乱碎片位置
+        function shufflePieces() {
+            // 创建一个随机顺序数组
+            const shuffledPositions = [0, 1, 2, 3]; // 修改为 4 个位置
+            for (let i = shuffledPositions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledPositions[i], shuffledPositions[j]] = [shuffledPositions[j], shuffledPositions[i]];
+            }
+            
+            // 应用随机顺序
+            elements.piecesContainer.innerHTML = '';
+            for (let i = 0; i < 4; i++) { // 修改为 4 个碎片
+                const piece = gameData.puzzlePieces[shuffledPositions[i]];
+                piece.dataset.position = i;
+                elements.piecesContainer.appendChild(piece);
+            }
+        }
+
+        // 开始计时器
+        function startTimer() {
+            gameData.timer = 0;
+            if (gameData.timerInterval) {
+                clearInterval(gameData.timerInterval);
+            }
+            
+            gameData.timerInterval = setInterval(() => {
+                gameData.timer++;
+                updateTimerDisplay();
+                
+                // 检查时间是否超过3分钟
+                if (gameData.timer >= 180) { // 180秒 = 3分钟
+                    gameOver(false);
+                }
+            }, 1000);
+        }
+
+        // 更新计时器显示
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameData.timer / 60).toString().padStart(2, '0');
+            const seconds = (gameData.timer % 60).toString().padStart(2, '0');
+            elements.timerDisplay.textContent = `${minutes}:${seconds}`;
+        }
+
+        // 绑定事件监听器
+        function bindEventListeners() {
+            // 发音按钮
+            elements.speakBtn.addEventListener('click', () => {
+                speakWord();
+            });
+            
+            // 显示含义按钮
+            elements.meaningBtn.addEventListener('click', () => {
+                toggleMeaning();
+            });
+            
+            // 提示按钮
+            elements.hintBtn.addEventListener('click', () => {
+                useHint();
+            });
+            
+            // 完成按钮
+            elements.completeBtn.addEventListener('click', () => {
+                checkPuzzle();
+            });
+            
+            // 重置按钮
+            elements.resetBtn.addEventListener('click', () => {
+                resetLevel();
+            });
+            
+            // 退出按钮
+            elements.exitBtn.addEventListener('click', () => {
+                if (confirm('确定要退出游戏吗？')) {
+                    window.location.reload();
+                }
+            });
+            
+            // 结果弹窗按钮
+            elements.nextBtn.addEventListener('click', () => {
+                nextPuzzle();
+            });
+            
+            elements.retryBtn.addEventListener('click', () => {
+                resetLevel();
+            });
+        }
+
+        // 单词发音
+        function speakWord() {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(gameData.currentPuzzleData.word);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 切换显示含义
+        function toggleMeaning() {
+            if (elements.meaningDisplay.classList.contains('opacity-0')) {
+                elements.meaningDisplay.classList.remove('opacity-0');
+                elements.meaningDisplay.classList.add('opacity-100');
+            } else {
+                elements.meaningDisplay.classList.remove('opacity-100');
+                elements.meaningDisplay.classList.add('opacity-0');
+            }
+        }
+
+        // 使用提示
+        function useHint() {
+            if (gameData.hintUsed >= 3 || !gameData.isPlaying) return;
+            
+            // 增加提示使用次数
+            gameData.hintUsed++;
+            
+            // 更新提示进度
+            elements.hintProgress.style.width = `${(gameData.hintUsed / 3) * 100}%`;
+            elements.hintText.textContent = `${3 - gameData.hintUsed}/3 次提示机会`;
+            
+            // 找到一个还未放置的正确位置
+            let emptyPositions = [];
+            for (let i = 0; i < 4; i++) { // 修改为 4 个位置
+                if (gameData.puzzleGrid[i] === null) {
+                    emptyPositions.push(i);
+                }
+            }
+            
+            // 如果还有空位，随机选择一个位置放置正确的碎片
+            if (emptyPositions.length > 0) {
+                const targetPosition = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
+                
+                // 找到对应正确位置的碎片（如果还未放置）
+                let pieceToPlace = null;
+                for (const piece of gameData.puzzlePieces) {
+                    if (parseInt(piece.dataset.index) === targetPosition && 
+                        !Array.from(elements.puzzleContainer.children).includes(piece)) {
+                        pieceToPlace = piece;
+                        break;
+                    }
+                }
+                
+                // 如果没找到，随便选一个还未放置的碎片
+                if (!pieceToPlace) {
+                    for (const piece of gameData.puzzlePieces) {
+                        if (!Array.from(elements.puzzleContainer.children).includes(piece)) {
+                            pieceToPlace = piece;
+                            break;
+                        }
+                    }
+                }
+                
+                // 放置碎片
+                if (pieceToPlace) {
+                    const targetCell = elements.puzzleContainer.children[targetPosition];
+                    targetCell.innerHTML = '';
+                    targetCell.appendChild(pieceToPlace);
+                    gameData.puzzleGrid[targetPosition] = pieceToPlace;
+                    pieceToPlace.dataset.position = targetPosition;
+                }
+            }
+            
+            // 如果使用了3次提示，显示完整图片
+            if (gameData.hintUsed === 3) {
+                elements.fullImage.classList.remove('opacity-0');
+                elements.fullImage.classList.add('opacity-100');
+                elements.imageContainer.innerHTML = '';
+                elements.imageContainer.appendChild(elements.fullImage);
+            }
+            
+            // 如果是第二关，根据提示次数显示不同的文字提醒
+            if (gameData.currentLevel === 2) {
+                switch (gameData.hintUsed) {
+                    case 1:
+                        elements.hintText.textContent = "提示：注意图片的颜色分布";
+                        break;
+                    case 2:
+                        elements.hintText.textContent = "提示：观察图片的边缘特征";
+                        break;
+                    case 3:
+                        elements.hintText.textContent = "提示：注意物体的形状和比例";
+                        break;
+                }
+            }
+        }
+
+        // 检查拼图是否正确
+        function checkPuzzle() {
+            if (!gameData.isPlaying) return;
+            
+                        // 检查每个格子中的碎片是否位置正确
+                        let isCorrect = true;
+                        for (let i = 0; i < 4; i++) { // 修改为 4 个位置
+                            const cell = elements.puzzleContainer.children[i];
+                            const piece = cell.querySelector('.piece-drag');
+            
+                            if (!piece || parseInt(piece.dataset.index) !== i) {
+                                isCorrect = false;
+                                break;
+                            }
+                        }
+            
+                        // 计算得分
+                        let currentScore = 0;
+                        if (isCorrect) {
+                            switch (gameData.hintUsed) {
+                                case 0:
+                                    currentScore = 10;
+                                    break;
+                                case 1:
+                                    currentScore = 8;
+                                    break;
+                                case 2:
+                                    currentScore = 6;
+                                    break;
+                                case 3:
+                                    currentScore = 4;
+                                    break;
+                            }
+                            gameData.score += currentScore;
+                            updateScore(currentScore);
+            
+                            elements.resultIcon.className = "mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 bg-green-100";
+                            elements.resultIcon.innerHTML = '<i class="fa fa-trophy text-4xl text-green-500"></i>';
+                            elements.resultTitle.textContent = "恭喜过关！";
+                            elements.resultMessage.textContent = `你获得了 ${currentScore} 分`;
+                            elements.nextBtn.style.display = "block";
+                        } else {
+                            elements.resultIcon.className = "mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 bg-red-100";
+                            elements.resultIcon.innerHTML = '<i class="fa fa-times text-4xl text-red-500"></i>';
+                            elements.resultTitle.textContent = "拼图错误";
+                            elements.resultMessage.textContent = "请重试";
+                            elements.nextBtn.style.display = "none";
+                        }
+            
+                        // 更新分数和时间显示
+                        elements.currentScore.textContent = currentScore;
+                        elements.totalScore.textContent = gameData.score;
+                        elements.totalTime.textContent = elements.timerDisplay.textContent;
+            
+                        // 显示弹窗
+                        elements.resultModal.classList.remove('opacity-0', 'pointer-events-none');
+                        elements.resultModal.querySelector('div').classList.remove('scale-95');
+                        elements.resultModal.querySelector('div').classList.add('scale-100');
+                    }
+
+        // 下一个拼图
+        function nextPuzzle() {
+            // 隐藏结果弹窗
+            elements.resultModal.classList.add('opacity-0', 'pointer-events-none');
+            elements.resultModal.querySelector('div').classList.remove('scale-100');
+            elements.resultModal.querySelector('div').classList.add('scale-95');
+            
+            // 检查是否完成了当前关卡的所有拼图
+            if (gameData.currentPuzzle < 5) {
+                // 继续当前关卡的下一个拼图
+                loadLevel(gameData.currentLevel, gameData.currentPuzzle + 1);
+                startTimer();
+            } else {
+                // 检查是否完成了所有关卡
+                if (gameData.currentLevel < 2) {
+                    // 进入下一关
+                    loadLevel(gameData.currentLevel + 1, 1);
+                    startTimer();
+                } else {
+                    // 完成了所有关卡
+                    gameOver(true);
+                }
+            }
+        }
+
+        // 重置当前关卡
+        function resetLevel() {
+            // 隐藏结果弹窗
+            elements.resultModal.classList.add('opacity-0', 'pointer-events-none');
+            elements.resultModal.querySelector('div').classList.remove('scale-100');
+            elements.resultModal.querySelector('div').classList.add('scale-95');
+            
+            // 重新加载当前关卡
+            loadLevel(gameData.currentLevel, gameData.currentPuzzle);
+            startTimer();
+        }
+
+        // 游戏结束
+        function gameOver(isSuccess) {
+            clearInterval(gameData.timerInterval);
+            
+            // 显示最终结果
+            if (isSuccess) {
+                alert(`恭喜你完成了所有关卡！总得分：${gameData.score}，用时：${elements.timerDisplay.textContent}`);
+            } else {
+                alert(`时间到！闯关失败。总得分：${gameData.score}`);
+            }
+        }
+
+        // 拖放事件处理函数
+        function handleDragStart(event) {
+            gameData.draggedPiece = event.target;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/html', event.target.outerHTML);
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const targetCell = event.target;
+            const draggedPiece = gameData.draggedPiece;
+
+            if (targetCell.classList.contains('piece-placeholder')) {
+                targetCell.innerHTML = '';
+                targetCell.appendChild(draggedPiece);
+                const index = parseInt(targetCell.dataset.index);
+                gameData.puzzleGrid[index] = draggedPiece;
+                draggedPiece.dataset.position = index;
+            }
+        }
+
+        function handleDragEnd(event) {
+            gameData.draggedPiece = null;
+        }
+
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
